@@ -1,0 +1,11 @@
+['# -*- coding: utf-8 -*-',
+ '# -*- file: colors.Gal♥Py -*-',
+ False,
+ '$define daisy color("daisy")',
+ '$define red color("red")',
+ '$define blue color("blue")',
+ '$define yellow color("yellow")',
+ '$define violet color("violet")',
+ '$define white color("white")',
+ False,
+ False]

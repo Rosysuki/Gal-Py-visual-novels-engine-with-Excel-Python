@@ -1,0 +1,11 @@
+['# -*- coding: utf-8 -*-',
+ '# -*- file: events.Gal♥Py -*-',
+ False,
+ '$define KEYDOWN pygame.KEYDOWN',
+ '$define KEYUP pygame.KEYUP',
+ '$define QUIT pygame.QUIT',
+ '$define MOUSEDOWN pygame.MOUSEBUTTONDOWN',
+ '$define MOUSEUP pygame.MOUSEBUTTONUP',
+ '$define MOUSEMOTION pygame.MOUSEMOTION',
+ False,
+ False]

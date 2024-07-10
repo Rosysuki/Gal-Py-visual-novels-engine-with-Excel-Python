@@ -1,0 +1,10 @@
+['# -*- coding: utf-8 -*-',
+ '# -*- file: chinese.Gal♥Py -*-',
+ False,
+ '$define 若 if',
+ '$define 当 while',
+ '$define 对 for',
+ '$define 导入 import',
+ '$define 于 in',
+ '$define 令 def',
+ False]

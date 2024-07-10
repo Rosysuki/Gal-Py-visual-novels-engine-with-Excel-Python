@@ -1,0 +1,6 @@
+['# -*- coding: utf-8 -*-',
+ '# -*- file: create.Gal♥Py -*-',
+ False,
+ '$define image pygame.image.load',
+ '$define text pygame.font.SysFont',
+ False]
