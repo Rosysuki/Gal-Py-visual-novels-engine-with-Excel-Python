@@ -1,0 +1,80 @@
+!Gal♥Py Support All-Syntax-In-Python!
+!Gal♥Py支持所有的Python语法！
+
+New KeyWords OR Syntax:
+新的关键字或语法：
+
+	0.$<GalPy!>
+                    
+                        Only Write In The First-Line Of Current Opened-File.
+                        只能出现在当前文件的第一行。
+                        As A Signal To Tell The Interpreter How To Run This File.
+                        作为一个标志去告诉解释器如何去运行这个文件。
+                        If You Want To Use This Signal, Normally Showed That Dead-Loop Used In Your Program.
+                        Else ,Enjoy Yourself Please.
+                        如果你用到了这个标志，通常是你的项目里用到了死循环。
+                        否则呢，你随意呗。
+
+                        Noted:
+                        请注意：
+
+                            When You Don't Use This Signal ,There Have Two New-Nature-KeyWords:
+                            当你未使用这个标志，这就多了两个关键字：
+
+                                (1) window:
+                                        Tkinter Window We Used -> TkWindow ,You Can Control This Window Now.
+                                        其实就是我们的这个窗口，现在你可以通过代码来控制窗口了。
+
+                                (2) screen:
+                                        Pygame Screen Game Used -> PyScreen ,You Can Create This Screen To Test You Game.
+                                        其实就是游戏的窗口，现在你可以通过代码来测试你要制作的游戏了。
+
+                            Else ,Please Create Two Of Those Yourself ,With GalPy-Module.
+                            否则呢，请您自己去利用GalPy自带的模块去创造这两个窗口。
+
+	1.$define
+                    
+                        Only Simple-String-Replace.
+                        仅仅是单纯的字符串替换。
+
+                        Example:
+                        举例：
+                        1.
+                            $define WIDTH 1000
+                        2.
+                            $define HELLO print("Hello ,Gal♥Py!")
+                        3.
+                            $define DEFAULT _
+                        4.
+                            $define <> !=
+                        5.
+                            $define -- #
+
+	2.$include
+                    
+                        Import The Package Filled With $define.
+                        导入里面全是$define语句的包。
+
+                        Example:
+                        举例：
+                            (item in {events ,colors ,locals ,create ,chinese ,...} ,'* ' is all-items)
+                        1.
+                            $include GalPy.item
+                            
+                        2.(Recommend)(推荐)
+                            $include *
+                            
+                        3.
+                            $include You-Package-Here
+
+	3.import
+                        Just "import" in Python.
+                        其实就是Python里的import。
+
+                        Append:
+                        追加用法：
+
+                            from * import *
+
+                            Once Import All-Modules In Gal♥Py.
+                            一次性导入所有的Gal♥Py模块。

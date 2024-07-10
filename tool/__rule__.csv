@@ -1,0 +1,4 @@
+shot,back,main,text,song,play,self,style
+shot_name,b1,m1,,#,fade,,font color
+shot2,b2,m2,,#,fadein,,font: default:1\2\3\4
+shot3,b3,m3,,song1,fadeout,,"color: default:1 ,2 ,3 ,4"
