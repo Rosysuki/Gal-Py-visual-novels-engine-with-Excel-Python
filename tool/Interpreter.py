@@ -6,7 +6,7 @@ __all__: list = [
     ]
 
 if "Interpreter.py" in __file__:
-    from re import findall as re_findall
+    from re import findall as re_findall ,compile as re_compile
     from enum import Enum ,unique
     from typing import Any ,NoReturn ,Self ,NewType ,Callable
     from tkinter.messagebox import showerror
@@ -27,13 +27,21 @@ staticpath: str = "//GalPy//"
 
 class GalPy(object):
 
+    define: Any = re_compile(r"^\$\s?[Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s+(.+)")
+    rdefine: Any = re_compile(r"^\$\s?[Rr][Dd][Ee][Ff][Ii][Nn][Ee]\s+(.+)\s+[Ee][Nn][Dd]\s+(\S+)")
+    include_all: Any = re_compile(r"^\$\s?[Ii][Nn][Cc][Ll][Uu][Dd][Ee]\s+(\*)\s*")
+    include: Any = re_compile(r"^\$\s?[Ii][Nn][Cc][Ll][Uu][Dd][Ee]\s+(.+)")
+    undefine: Any = re_compile(r"\$\s?[Uu][Nn][Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s*")
+    
+
     events: str = basepath + module + "events" + suffix
     colors: str = basepath + module + "colors" + suffix
     locals: str = basepath + module + "locals" + suffix
     chinese: str = basepath + module + "chinese" + suffix
     create: str = basepath + module + "create" + suffix
-
-    ALLMODULE: list[str] = [events ,colors ,locals ,chinese ,create]
+    embody: str = basepath + module + "embody" + suffix
+    
+    ALLMODULE: list[str] = [events ,colors ,locals ,chinese ,embody]
 
     @classmethod
     def encode(cls ,text: str|bytes) -> str:
@@ -46,6 +54,15 @@ class GalPy(object):
     @classmethod
     def u202a(cls ,text: str) -> str:
         return ''.join(list(text)[1:])
+
+    @classmethod
+    def count_space(cls ,text: str) -> int:
+        if not text:
+            return 0b0
+        for index ,each in enumerate(text ,start=0):
+            if each != ' ':
+                break
+        return index
 
 
 @unique
@@ -86,15 +103,16 @@ class KeyWords(object):
 """
 
 def KeyWords() -> dict[str : str]:
-    return {"window" : "#AB01FF" ,
-            "screen" : "#FF6DD3" ,
-            "echo" : "#0BBFFF" ,
-            "define" : "#00FF5E" ,
-            "include" : "#FF9139" ,
-            "import" : "#61FFDE" ,
-            "PyScreen" : "#8D00FF" ,
-            #"*" : "#FF0000" ,
-            "from" : "#FA3A89"}
+    return {
+        "window" : "#AB01FF" ,"screen" : "#FF6DD3" ,
+        "echo" : "#0BBFFF" ,
+        "define" : "#00FF5E" , "rdefine" : "#00FF5E" , "undefine" : "#00FF5E" ,#"ifdefine" : "#00FF5E" ,"ifndefine" : "#00FF5E" ,
+        "include" : "#FF9139" ,
+        "from" : "#FA3A89" ,"import" : "#61FFDE" ,
+        "PyScreen" : "#8D00FF" ,
+        "let" : "#EB3324"
+        }
+
 
 
 class Parser(object):
@@ -107,9 +125,19 @@ class Parser(object):
 
         #print(__list)
         
-        for i ,e in enumerate(__list ,start=1):
-            if not len(res := re_findall(r"^\$\s?[Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s+(.+)" ,e)):
-                showerror("语法错误" ,f"Error: Line{i}\ninclude只能用define语句！")
+        for i ,e in enumerate(__list ,start = 1):
+
+            if not re_findall(r"([Dd][Ee][Ff][Ii][Nn][Ee])" ,e):
+                continue
+
+            if len((res := re_findall(r"^\$\s?[Rr][Dd][Ee][Ff][Ii][Nn][Ee]\s+(.+)\s+[Ee][Nn][Dd]\s+(\S+)" ,e))):
+                pass
+            
+            elif len(res := re_findall(r"^\$\s?[Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s+(.+)" ,e)):
+                pass
+
+            else:
+                showerror("语法错误" ,f"Error: Line{i}\ninclude只能用define/rdefine语句！")
                 return (False ,{})
             
             __dict[res[0][0]]: dict[str : str] = res[0][1]
@@ -162,15 +190,25 @@ class Parser(object):
 
         for index ,each in enumerate(self.__list[:] ,start=0):
             
-            if len((res := re_findall(r"^\$\s?[Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s+(.+)" ,str(each)))):
+            if len((res := GalPy.define.findall(str(each)))):
                 __dict[res[0][0]]: dict[str : str] = res[0][1]
+                continue
 
-            if (res := re_findall(r"^\$\s?[Ii][Nn][Cc][Ll][Uu][Dd][Ee]\s+(\*)\s*" ,str(each))).__len__():
+            if len((res := GalPy.rdefine.findall(str(each)))):
+                __dict[res[0][0]]: dict[str : str] = res[0][1]
+                continue
+
+            if (res := GalPy.include_all.findall(str(each))).__len__():
                 __include |= set(GalPy.ALLMODULE)
                 continue
 
-            if len((res := re_findall(r"^\$\s?[Ii][Nn][Cc][Ll][Uu][Dd][Ee]\s+(.+)" ,str(each)))):
+            if (res := GalPy.undefine.findall(str(each))).__len__():
+                __dict.pop(res[0])
+                continue
+
+            if len((res := GalPy.include.findall(str(each)))):
                 __include.add(eval(res[0]))
+                continue
                 #del self.__list[index]
             #print(f"{res=}")
 
@@ -201,7 +239,17 @@ class Parser(object):
                 for i ,(key ,item) in enumerate(__dict.items() ,start=1):
                     each: str = each.replace(key ,item)
 
-                each: str = each.replace("echo" ,"print").replace("<" ,"(").replace(">" ,")")
+                each: str = each.replace("echo" ,"print")#.replace("<" ,"(").replace(">" ,")")
+
+                #if (res := re_findall(r"(.+)\s*<-\s*(\S+)" ,each.strip())).__len__():
+                #    each: str = ' ' * GalPy.count_space(each) + ''.join([res[0][1] ,'=' ,res[0][0]])
+
+                #if (res := re_findall(r"\s*[Ll][Ee][Tt]\s+(\S+)\s+[Ii][Ss]\s(.+)\s*" ,each.strip())).__len__():
+                if (res := re_findall(r"\s*[Ll][Ee][Tt]\s+(\S+)\s+->\s(.+)\s*" ,each.strip())).__len__():
+                    each: str = ' ' * GalPy.count_space(each) + ''.join([res[0][0] ,' = ' ,res[0][1]])
+
+                #if (res := re_findall(r"\s*"))
+                    
                 __list.append(each)
 
                 
@@ -224,7 +272,7 @@ class Parser(object):
 
     def RunScreenModule(self ,text: str) -> bool:
         #print("RunScreenModule!")
-        return True if re_findall(r"^\$\s?(<GalPy!>)\s*" ,text.split('\n')[0]).__len__() else False
+        return re_findall(r"#\s*(<GalPy!>)\s*" ,text.split('\n')[0]).__len__()
         
 
 
@@ -234,8 +282,8 @@ if __name__ == "__main__":
     #print(key.value)
     parser = Parser()
     #print(parser.getWH("screen.width = 123\n\nscreen.height=321"))
-    #print(parser.RunScreenModule("$ <GalPy!>"))
     #parser.get("import this\nprint(1)\nstart\npause\n")
+    print(parser.RunScreenModule("# <GalPy!>"))
     #parser << r"C:\Users\sfuch\Desktop\Gal♥Py\tool\t.Gal♥Py"
 
     #test: str = "1234567890"
@@ -246,15 +294,7 @@ if __name__ == "__main__":
 
     #print(GalPy.u202a(r"‪C:\Users\sfuch\Desktop\pic\cute.png") == r"C:\Users\sfuch\Desktop\pic\cute.png")
 
-    print('//'.join(__file__.split('\\')[:-2]))
+    #print('//'.join(__file__.split('\\')[:-2]))
+
+    print(GalPy.count_space("    space 12 3 4"))
     
-
-
-
-
-
-
-
-
-
-
