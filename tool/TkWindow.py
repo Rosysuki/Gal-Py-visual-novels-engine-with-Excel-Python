@@ -22,9 +22,9 @@ if "TkWindow.py" in __file__:
     from time import time ,strftime ,sleep
     import asyncio
     
-    from PyScreen import *
-    from DataBase import CsvDataBase
-    from Interpreter import *
+    from tool.PyScreen import *
+    from tool.DataBase import CsvDataBase
+    from tool.Interpreter import *
     
 
 def test() -> NoReturn: showinfo("☺" ,"敬请期待！")
@@ -36,10 +36,10 @@ class TkMeta(type):
 
     __MySelf__: Any = NotImplemented
 
-    with open(r"Hint.dat" ,'r' ,encoding="utf-8") as file:
+    with open(r"tool//Hint.dat" ,'r' ,encoding="utf-8") as file:
         Hint: str = file.read()
 
-    with open(r"About.dat" ,'r' ,encoding="utf-8") as file:
+    with open(r"tool//About.dat" ,'r' ,encoding="utf-8") as file:
         About: str = file.read()
 
     def __new__(mcls ,name: str ,bases: tuple ,attrs: dict) -> Any:
@@ -412,7 +412,7 @@ class TkWindow(Tk ,metaclass = TkMeta):
         label: Label = ttk.Label(self ,text="请选择项目：")
         button: Button = ttk.Button(self ,text="OK" ,command=self.LoadFile)
         
-        self.TempList: list[Any] = [label ,combo ,button]
+        self.TempList.extend([label ,combo ,button])
         
         for index ,each in enumerate(self.TempList):
             each.place(x=self.width//2-100 ,y=10+30*index)
@@ -483,8 +483,10 @@ class TkWindow(Tk ,metaclass = TkMeta):
 
                 
                 self.Text.delete('1.0' ,END)
+
+                target_file: str = each
             
-                with open(each ,'r' ,encoding='utf-8' ,newline='') as file:
+                with open(target_file ,'r' ,encoding='utf-8' ,newline='') as file:
                     self.Text.insert('1.0' ,GalPy.decode(file.read()))
                     
                 self.target_file: str = truename
@@ -497,8 +499,9 @@ class TkWindow(Tk ,metaclass = TkMeta):
                     self.AutoTagAddBtn: bool = True
 
             def SaveFile() -> NoReturn:
+                target_file: str = each
                 text: str = self.Text.get('1.0' ,END)
-                with open(each ,'w' ,encoding='utf-8' ,newline='') as file:
+                with open(target_file ,'w' ,encoding='utf-8' ,newline='') as file:
                     file.write(GalPy.encode(text))
                 self.parser.get(text) << each
 
@@ -579,7 +582,7 @@ class TkWindow(Tk ,metaclass = TkMeta):
                             d1 ,d2 = Memory.difference(_Memory) ,_Memory.difference(Memory)
                             for index ,each in enumerate({*d1 ,*d2}):
                                 self.Text.tag_delete(each)
-                        if Memory.__len__().__gt__(50) or _Memory.__len__().__gt__(50):
+                        if Memory.__len__().__gt__(100) or _Memory.__len__().__gt__(100):
                             Memory.clear()
                             _Memory.clear()
 
@@ -621,6 +624,8 @@ class TkWindow(Tk ,metaclass = TkMeta):
 
         basename: str = path.basename(filename)
         truename: str = basename[:basename.index('.')]
+
+        self.__InitTempList()
         
         if basename[basename.index('.'):] != self.__suffix:
             showerror("错误" ,f"不是{self.__suffix}文件！")
@@ -665,6 +670,8 @@ class TkWindow(Tk ,metaclass = TkMeta):
                 TEXT: str = file.read()
                 #self.withdraw()
                 print(f"\n -*- {truename}"+self.__suffix+" -*-\n" ,strftime("-*- 运行开始: %H:%M:%S -*-") ,end="\n")
+
+                #print(f"{self.parser.RunScreenModule(TEXT)=}")
                 
                 if self.parser.RunScreenModule(TEXT):
                     RETURN: str = getcwd()
@@ -696,6 +703,8 @@ class TkWindow(Tk ,metaclass = TkMeta):
         if (save_path := filedialog.asksaveasfilename()) is None:
             showerror("错误" ,"文件名字不应为空！")
             return
+
+        self.__InitTempList()
 
         save_path: str = save_path[:save_path.index('.')] if '.' in save_path else save_path
         save_path += self.__suffix
