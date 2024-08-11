@@ -15,6 +15,7 @@ if "Interpreter.py" in __file__:
     from os.path import basename ,dirname
     from os import mkdir ,path
     from base64 import b64encode ,b64decode
+    from sys import stderr
 
 
 KeyWord: NewType = NewType("KeyWord" ,type)
@@ -31,7 +32,9 @@ class GalPy(object):
     rdefine: Any = re_compile(r"^\$\s?[Rr][Dd][Ee][Ff][Ii][Nn][Ee]\s+(.+)\s+[Ee][Nn][Dd]\s+(\S+)")
     include_all: Any = re_compile(r"^\$\s?[Ii][Nn][Cc][Ll][Uu][Dd][Ee]\s+(\*)\s*")
     include: Any = re_compile(r"^\$\s?[Ii][Nn][Cc][Ll][Uu][Dd][Ee]\s+(.+)")
-    undefine: Any = re_compile(r"\$\s?[Uu][Nn][Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s*")
+    undefine: Any = re_compile(r"^\$\s?[Uu][Nn][Dd][Ee][Ff][Ii][Nn][Ee]\s+(\S+)\s*")
+    register: Any = re_compile(r"^\$\s?[Rr][Ee][Gg][Ii][Ss][Tt][Ee][Rr](.*)")
+    unregister: Any = re_compile(r"\$\s?[Uu][Nn][Rr][Ee][Gg][Ii][Ss][Tt][Ee][Rr](.*)")
     
 
     events: str = basepath + module + "events" + suffix
@@ -107,6 +110,7 @@ def KeyWords() -> dict[str : str]:
         "window" : "#AB01FF" ,"screen" : "#FF6DD3" ,
         "echo" : "#0BBFFF" ,
         "define" : "#00FF5E" , "rdefine" : "#00FF5E" , "undefine" : "#00FF5E" ,#"ifdefine" : "#00FF5E" ,"ifndefine" : "#00FF5E" ,
+        "register" : "00FF5E" ,"unregister" : "00FF5E" ,
         "include" : "#FF9139" ,
         "from" : "#FA3A89" ,"import" : "#61FFDE" ,
         "PyScreen" : "#8D00FF" ,
@@ -119,13 +123,20 @@ class Parser(object):
 
 
     @staticmethod
-    def legal(text: str) -> tuple[bool ,dict]:
+    def legal(text: str) -> tuple[bool ,dict ,set]:
         __dict: dict = {}
         __list: list = [each for each in text.split('\n') if "#" not in each and each != '']
+        __register: set = set()
 
         #print(__list)
         
         for i ,e in enumerate(__list ,start = 1):
+
+            #print(f"{e=}")
+
+            if (res := GalPy.register.findall(e)).__len__():
+                __register.add(res[0].strip())
+                continue
 
             if not re_findall(r"([Dd][Ee][Ff][Ii][Nn][Ee])" ,e):
                 continue
@@ -137,13 +148,13 @@ class Parser(object):
                 pass
 
             else:
-                showerror("语法错误" ,f"Error: Line{i}\ninclude只能用define/rdefine语句！")
-                return (False ,{})
+                showerror("语法错误" ,f"Error: Line{i}\ninclude仅支持define/rdefine/register宏！")
+                return (False ,{} ,set())
             
             __dict[res[0][0]]: dict[str : str] = res[0][1]
         else:
             #print(f"legal = {__dict}")
-            return (True ,__dict)
+            return (True ,__dict ,__register)
 
 
     def __init__(self ,
@@ -182,6 +193,7 @@ class Parser(object):
         __list: list = []
         __dict: dict = {}
         __include: set = set()
+        __register: set = set()
 
         #Gal♥Py
         if self.daemon:
@@ -190,11 +202,11 @@ class Parser(object):
 
         for index ,each in enumerate(self.__list[:] ,start=0):
             
-            if len((res := GalPy.define.findall(str(each)))):
+            if (res := GalPy.define.findall(str(each))).__len__():
                 __dict[res[0][0]]: dict[str : str] = res[0][1]
                 continue
 
-            if len((res := GalPy.rdefine.findall(str(each)))):
+            if (res := GalPy.rdefine.findall(str(each))).__len__():
                 __dict[res[0][0]]: dict[str : str] = res[0][1]
                 continue
 
@@ -202,19 +214,32 @@ class Parser(object):
                 __include |= set(GalPy.ALLMODULE)
                 continue
 
-            if (res := GalPy.undefine.findall(str(each))).__len__():
-                __dict.pop(res[0])
-                continue
-
-            if len((res := GalPy.include.findall(str(each)))):
+            if (res := GalPy.include.findall(str(each))).__len__():
                 __include.add(eval(res[0]))
                 continue
+
+            if (res := GalPy.register.findall(str(each))).__len__():
+                __register.add(res[0].strip())
+                continue
+
+            if (res := GalPy.undefine.findall(str(each))).__len__():
+                try:
+                    __dict.pop(res[0].strip())
+                except KeyError as KE:
+                    stderr.write(f"{res[0]}不存在...\n")
+                continue
+
+            if (res := GalPy.unregister.findall(str(each))).__len__():
+                __register.discard(res[0].strip())
+                continue
+
                 #del self.__list[index]
             #print(f"{res=}")
 
         #__include: set = {eval(each) for each in __include}
         #print(f"{__include=}")
-
+        
+        #include
         for index ,each in enumerate(__include ,start=1):
             #print(f"{each=}")
             with open(each ,'r' ,encoding="utf-8" ,newline='') as file:
@@ -222,9 +247,11 @@ class Parser(object):
                 #print(f"{DECODE_TEXT=}")
                 if (res := Parser.legal(DECODE_TEXT))[0]:
                     __dict |= res[1]
+                    __register |= res[2]
 
         else:
             #pp(__dict)
+            #print(f"{__register=}")
             pass
 
         for index ,each in enumerate(self.__list ,start=1):
@@ -239,13 +266,27 @@ class Parser(object):
                 for i ,(key ,item) in enumerate(__dict.items() ,start=1):
                     each: str = each.replace(key ,item)
 
-                each: str = each.replace("echo" ,"print")#.replace("<" ,"(").replace(">" ,")")
+                #each: str = each.replace("echo" ,"print")#.replace("<" ,"(").replace(">" ,")")
+
+                for j ,e in enumerate(__register ,start=1):
+                    if (res := re_findall(r"(.*){}(.*)".format(e) ,each.strip())).__len__():
+                        if each.strip().count(e) == 1:
+                            each: str = ''.join([res[0][0] ,e ,"(" ,res[0][1].strip() ,")"])
+                        else:
+                            showerror("错误" ,"过于复杂!")
+                            stderr.write("语句有歧义！\n")
+                            return
+                
+                #if (res := re_findall(r"\s*print(.*)" ,each.strip())).__len__():
+                #    each: str = ' ' * GalPy.count_space(each) + ''.join(["print(" ,res[0].strip() ,")"])
 
                 #if (res := re_findall(r"(.+)\s*<-\s*(\S+)" ,each.strip())).__len__():
                 #    each: str = ' ' * GalPy.count_space(each) + ''.join([res[0][1] ,'=' ,res[0][0]])
 
-                #if (res := re_findall(r"\s*[Ll][Ee][Tt]\s+(\S+)\s+[Ii][Ss]\s(.+)\s*" ,each.strip())).__len__():
-                if (res := re_findall(r"\s*[Ll][Ee][Tt]\s+(\S+)\s+->\s(.+)\s*" ,each.strip())).__len__():
+                #if (res := re_findall(r"\s*[Ll][Ee][Tt]\s+(\S+)\s+->\s(.+)\s*" ,each.strip())).__len__():
+                #    each: str = ' ' * GalPy.count_space(each) + ''.join([res[0][0] ,' = ' ,res[0][1]])
+
+                while (res := re_findall(r"\s*[Ll][Ee][Tt]\s+(\S+)\s+->\s(.+)\s*" ,each.strip())).__len__():
                     each: str = ' ' * GalPy.count_space(each) + ''.join([res[0][0] ,' = ' ,res[0][1]])
 
                 #if (res := re_findall(r"\s*"))
