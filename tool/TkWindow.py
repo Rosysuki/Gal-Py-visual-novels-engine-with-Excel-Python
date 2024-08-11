@@ -12,7 +12,7 @@ if "TkWindow.py" in __file__:
     from tkinter.colorchooser import *
     from typing import NoReturn ,Self ,Any ,Deque ,Callable
     from os import system ,mkdir ,path ,getcwd ,chdir
-    from sys import path as sys_path
+    from sys import path as sys_path ,stderr
     from collections import deque
     from glob import iglob ,glob
     from re import findall as re_findall
@@ -21,6 +21,7 @@ if "TkWindow.py" in __file__:
     from json import load as json_load ,dump as json_dump
     from time import time ,strftime ,sleep
     import asyncio
+    from random import *
     
     from tool.PyScreen import *
     from tool.DataBase import CsvDataBase
@@ -190,6 +191,7 @@ class TkWindow(Tk ,metaclass = TkMeta):
                                          }
 
         if not self.__isTemplateExists:
+            stderr.write("WARNING: 模板文件缺失！\n")
             return
 
 
@@ -380,7 +382,7 @@ class TkWindow(Tk ,metaclass = TkMeta):
                 # Run Module #
                 TEXT: str = file.read()
                 #self.withdraw()
-                print(f"\n -*- {truename}"+self.__suffix+" -*-\n" ,strftime("-*- 运行开始: %H:%M:%S -*-") ,end="\n")
+                print(f"\n -*- {file_name}"+self.__suffix+" -*-\n" ,strftime("-*- 运行开始: %H:%M:%S -*-") ,end="\n")
                 
                 if self.parser.RunScreenModule(TEXT):
                     RETURN: str = getcwd()
@@ -582,7 +584,7 @@ class TkWindow(Tk ,metaclass = TkMeta):
                             d1 ,d2 = Memory.difference(_Memory) ,_Memory.difference(Memory)
                             for index ,each in enumerate({*d1 ,*d2}):
                                 self.Text.tag_delete(each)
-                        if Memory.__len__().__gt__(100) or _Memory.__len__().__gt__(100):
+                        if Memory.__len__().__gt__(200) or _Memory.__len__().__gt__(200):
                             Memory.clear()
                             _Memory.clear()
 
