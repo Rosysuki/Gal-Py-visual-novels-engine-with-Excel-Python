@@ -1,5 +1,7 @@
 Welcome to Gal♥Py! 
 
+README: https://blog.csdn.net/2303_79350799/article/details/141057416?spm=1001.2014.3001.5501
+
 Gal♥Py is an engine that uses Excel for creating visual novels ,especially for 2D gal-game :).
 Before using, Gal♥Py would like to tell you:
  ① Gal♥Py is only suitable for person who do not want to spend too much learning cost to create their own galgame.
